@@ -3,7 +3,7 @@
 CONFIG_FILE="$HOME/.pipe-cli.json"
 
 install_dependencies() {
-    echo "📦 Installing Rust, dependencies, and PIPE CLI..."
+    echo "Installing Rust, dependencies, and PIPE CLI..."
     sudo apt update && sudo apt upgrade -y
     sudo apt install curl iptables build-essential git wget lz4 jq make gcc postgresql-client nano automake autoconf tmux htop nvme-cli libgbm1 pkg-config libssl-dev tar clang bsdmainutils ncdu unzip libleveldb-dev libclang-dev ninja-build -y
     curl https://sh.rustup.rs -sSf | sh -s -- -y
@@ -14,7 +14,7 @@ install_dependencies() {
     cd pipe || return
     cargo install --path .
     cd - || return
-    echo "✅ Installation complete."
+    echo "Installation complete."
     read -p "Press Enter to continue..."
 }
 
@@ -100,18 +100,18 @@ while true; do
     echo "           MADE BY PRODIP"
     echo "==========================================="
     echo "============== PIPE MENU ==============="
-    echo "1. Rust, dependencies ও Pipe CLI ইনস্টল"
-    echo "2. নতুন ইউজার তৈরি ও পাসওয়ার্ড সেট"
-    echo "3. রেফারেল কোড apply + generate"
-    echo "4. 2 SOL → PIPE টোকেন"
-    echo "5. ফাইল আপলোড"
-    echo "6. ফাইলের পাবলিক লিংক তৈরি"
-    echo "7. আপলোড হওয়া ফাইল লিস্ট দেখানো"
-    echo "8. কোনো ফাইল ডিলিট করা"
-    echo "9. রেফারেল তথ্য দেখা"
-    echo "10. config ফাইল reload করা"
-    echo "11. config ফাইল nano তে দেখা"
-    echo "12. স্ক্রিপ্ট বন্ধ করা"
+    echo "1. Install Rust, dependencies and Pipe CLI"
+    echo "2. Create new user and set password"
+    echo "3. Apply referral code and generate"
+    echo "4. Swap 2 SOL for PIPE token"
+    echo "5. Upload a file"
+    echo "6. Generate public link for file"
+    echo "7. List uploaded files"
+    echo "8. Delete a file"
+    echo "9. Show referral information"
+    echo "10. Reload config file"
+    echo "11. View config file"
+    echo "12. Exit script"
     echo "==========================================="
     read -p "Enter choice [1-12]: " choice
 
