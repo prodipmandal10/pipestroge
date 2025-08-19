@@ -60,55 +60,49 @@ swap_tokens() {
 }
 
 # -------------------------
-# Function: Upload file (Auto YouTube download)
+# Function: Upload file (Download from URL & Upload to PIPE)
 # -------------------------
 upload_file() {
-    echo "📤 Auto YouTube Random Video Download & Upload"
+    echo "📤 Download & Upload File to PIPE"
 
     # Detect active user's home
     USER_HOME=$(eval echo ~$USER)
     DOWNLOAD_DIR="$USER_HOME/pipe_downloads"
     mkdir -p "$DOWNLOAD_DIR"
 
-    # Install yt-dlp if missing
-    if ! command -v yt-dlp &>/dev/null; then
-        echo "⚙️ Installing yt-dlp..."
-        sudo apt update && sudo apt install -y yt-dlp
+    # Ask user for direct file link (Google Drive or direct URL)
+    read -p "🌐 Enter file URL to download: " FILE_URL
+
+    # Install wget if missing
+    if ! command -v wget &>/dev/null; then
+        echo "⚙️ Installing wget..."
+        sudo apt update && sudo apt install -y wget
     fi
 
-    # YouTube video list (Random pick)
-    VIDEO_LIST=(
-        "https://www.youtube.com/watch?v=aqz-KE-bpKQ"
-        "https://www.youtube.com/watch?v=2Vv-BfVoq4g"
-        "https://www.youtube.com/watch?v=Zi_XLOBDo_Y"
-        "https://www.youtube.com/watch?v=jfKfPfyJRdk"
-        "https://www.youtube.com/watch?v=ScMzIvxBSi4"
-    )
+    # Ask for the filename to save
+    read -p "💾 Enter filename to save as (with extension): " FILE_NAME
 
-    RANDOM_VIDEO=${VIDEO_LIST[$RANDOM % ${#VIDEO_LIST[@]}]}
-    echo "🎬 Downloading: $RANDOM_VIDEO"
+    FILE_PATH="$DOWNLOAD_DIR/$FILE_NAME"
 
-    yt-dlp -f "bestvideo[height<=1080]+bestaudio/best[filesize<1600M]" \
-        --merge-output-format mp4 \
-        -o "$DOWNLOAD_DIR/video.%(ext)s" \
-        "$RANDOM_VIDEO"
+    # Download the file
+    echo "⏬ Downloading $FILE_URL ..."
+    wget -O "$FILE_PATH" "$FILE_URL"
 
-    FILE_PATH=$(ls -t $DOWNLOAD_DIR/video.* | head -1)
-    FILE_NAME=$(basename "$FILE_PATH")
-
-    # Size check
-    FILE_SIZE=$(du -m "$FILE_PATH" | cut -f1)
-    if [ "$FILE_SIZE" -lt 800 ] || [ "$FILE_SIZE" -gt 1500 ]; then
-        echo "❌ File size $FILE_SIZE MB (Not in 800–1500MB). Retrying..."
-        rm -f "$FILE_PATH"
+    # Check if file exists
+    if [ ! -f "$FILE_PATH" ]; then
+        echo "❌ Download failed!"
+        read -p "Press Enter to continue..."
         return
     fi
 
-    echo "✅ Downloaded $FILE_NAME ($FILE_SIZE MB)"
+    FILE_SIZE=$(du -h "$FILE_PATH" | cut -f1)
+    echo "✅ Downloaded $FILE_NAME ($FILE_SIZE)"
 
-    # Upload & generate public link
-    echo "📤 Uploading to PIPE..."
+    # Upload to PIPE
+    echo "📤 Uploading $FILE_NAME to PIPE..."
     pipe upload-file "$FILE_PATH" "$FILE_NAME"
+
+    # Generate public link
     echo "🔗 Generating public link..."
     pipe create-public-link "$FILE_NAME"
 
@@ -178,7 +172,7 @@ while true; do
     echo -e "\e[1;33m2. 🆕 Create new user and set password\e[0m"
     echo -e "\e[1;33m3. 🎁 Apply referral code and generate\e[0m"
     echo -e "\e[1;33m4. 🔄 Swap 2 SOL for PIPE token\e[0m"
-    echo -e "\e[1;33m5. 📤 Upload a file (auto YouTube random video)\e[0m"
+    echo -e "\e[1;33m5. 📤 Upload a file (download from URL & upload)\e[0m"
     echo -e "\e[1;33m6. 🔗 Generate public link for file\e[0m"
     echo -e "\e[1;33m7. 📂 List uploaded files\e[0m"
     echo -e "\e[1;33m8. ❌ Delete a file\e[0m"
