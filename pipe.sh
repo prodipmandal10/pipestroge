@@ -88,7 +88,6 @@ upload_gdrive_file() {
     read -p "🔗 Enter Google Drive file link: " gdrive_link
     read -p "✏️ Enter desired filename (with extension): " new_name
 
-    # Detect download directory
     USER_HOME=$(eval echo ~$USER)
     DOWNLOAD_DIR="$USER_HOME/pipe_downloads"
     mkdir -p "$DOWNLOAD_DIR"
@@ -171,6 +170,24 @@ view_config() {
 }
 
 # -------------------------
+# Function: View PIPE credentials
+# -------------------------
+view_credentials() {
+    if [ -f "$CONFIG_FILE" ]; then
+        echo "📋 PIPE Credentials:"
+        USER_ID=$(jq -r '.user_id' "$CONFIG_FILE")
+        APP_KEY=$(jq -r '.app_key' "$CONFIG_FILE")
+        SOLANA_PUBKEY=$(jq -r '.solana_pubkey' "$CONFIG_FILE")
+        echo "User ID      : $USER_ID"
+        echo "App Key      : $APP_KEY"
+        echo "Solana Pubkey: $SOLANA_PUBKEY"
+    else
+        echo "⚠️ Config file not found."
+    fi
+    read -p "Press Enter to continue..."
+}
+
+# -------------------------
 # Main Menu Loop
 # -------------------------
 while true; do
@@ -188,9 +205,10 @@ while true; do
     echo -e "\e[1;33m10. 🔄 Reload config file\e[0m"
     echo -e "\e[1;33m11. 📝 View config file\e[0m"
     echo -e "\e[1;33m12. 🚪 Exit script\e[0m"
+    echo -e "\e[1;33m13. 📝 View PIPE credentials\e[0m"
     echo -e "\e[1;34m==============================\e[0m"
 
-    read -p "Choose an option [1-12]: " opt
+    read -p "Choose an option [1-13]: " opt
     case $opt in
         1) install_pipe ;;
         2) create_user ;;
@@ -204,6 +222,7 @@ while true; do
         10) reload_config ;;
         11) view_config ;;
         12) echo "🚪 Exiting... Bye!"; exit 0 ;;
-        *) echo -e "\e[1;31m❌ Invalid option! Please enter 1-12.\e[0m"; read -p "Press Enter to continue..." ;;
+        13) view_credentials ;;
+        *) echo -e "\e[1;31m❌ Invalid option! Please enter 1-13.\e[0m"; read -p "Press Enter to continue..." ;;
     esac
 done
