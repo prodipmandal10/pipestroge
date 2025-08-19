@@ -1,8 +1,21 @@
 #!/bin/bash
 
+# -------------------------
+# Welcome Banner
+# -------------------------
+clear
+echo -e "\e[1;32m"
+echo "======================================================"
+echo "           🧱 PIPE NETWORK (MADE BY PRODIP)           "
+echo "======================================================"
+echo -e "\e[0m"
+echo -e "🌐 Follow on Twitter : \e[1;34mhttps://x.com/prodipmandal10\e[0m"
+echo -e "📩 DM on Telegram    : \e[1;35m@prodipgo\e[0m"
+echo "------------------------------------------------------"
+sleep 3
+
 # =========================
-# PIPE Network Helper Script (Final Ready-to-Run)
-# MADE BY PRODIP
+# PIPE Network Helper Script
 # =========================
 
 CONFIG_FILE="$HOME/.pipe-cli.json"
@@ -192,23 +205,23 @@ view_credentials() {
 # -------------------------
 while true; do
     clear
-    echo -e "\e[1;34m====== PIPE NODE HELPER ======\e[0m"
-    echo -e "\e[1;33m1. ⚙️ Install Rust, dependencies and Pipe CLI\e[0m"
-    echo -e "\e[1;33m2. 🆕 Create new user and set password\e[0m"
-    echo -e "\e[1;33m3. 🎁 Apply referral code and generate\e[0m"
-    echo -e "\e[1;33m4. 🔄 Swap 2 SOL for PIPE token\e[0m"
-    echo -e "\e[1;33m5. 📤 Download Google Drive file & Upload to PIPE\e[0m"
-    echo -e "\e[1;33m6. 🔗 Generate public link for file\e[0m"
-    echo -e "\e[1;33m7. 📂 List uploaded files\e[0m"
-    echo -e "\e[1;33m8. ❌ Delete a file\e[0m"
-    echo -e "\e[1;33m9. 📋 Show referral information\e[0m"
-    echo -e "\e[1;33m10. 🔄 Reload config file\e[0m"
-    echo -e "\e[1;33m11. 📝 View config file\e[0m"
-    echo -e "\e[1;33m12. 🚪 Exit script\e[0m"
-    echo -e "\e[1;33m13. 📝 View PIPE credentials\e[0m"
-    echo -e "\e[1;34m==============================\e[0m"
+    echo -e "\e[1;34m========= 🔧 PIPE NODE HELPER MENU 🔧 =========\e[0m"
+    echo -e "\e[1;33m 1. ⚙️  Install Rust, dependencies and Pipe CLI\e[0m"
+    echo -e "\e[1;36m 2. 🆕  Create new user and set password\e[0m"
+    echo -e "\e[1;35m 3. 🎁  Apply referral code and generate\e[0m"
+    echo -e "\e[1;32m 4. 🔄  Swap 2 SOL for PIPE token\e[0m"
+    echo -e "\e[1;36m 5. 📤  Download Google Drive file & Upload to PIPE\e[0m"
+    echo -e "\e[1;35m 6. 🔗  Generate public link for file\e[0m"
+    echo -e "\e[1;33m 7. 📂  List uploaded files\e[0m"
+    echo -e "\e[1;31m 8. ❌  Delete a file\e[0m"
+    echo -e "\e[1;36m 9. 📋  Show referral information\e[0m"
+    echo -e "\e[1;34m10. 🔄  Reload config file\e[0m"
+    echo -e "\e[1;33m11. 📝  View config file\e[0m"
+    echo -e "\e[1;32m12. 🚪  Exit script\e[0m"
+    echo -e "\e[1;36m13. 🧾  View PIPE credentials\e[0m"
+    echo -e "\e[1;34m===============================================\e[0m"
 
-    read -p "Choose an option [1-13]: " opt
+    read -p "👉 Choose an option [1-13]: " opt
     case $opt in
         1) install_pipe ;;
         2) create_user ;;
