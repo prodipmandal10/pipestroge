@@ -20,6 +20,7 @@ sleep 3
 
 CONFIG_FILE="$HOME/.pipe-cli.json"
 VENV_DIR="$HOME/pipe_venv"
+PIPE_PATH_SCRIPT="$HOME/set_pipe_path.sh"
 
 # -------------------------
 # Function: Setup Python virtual environment & gdown
@@ -45,7 +46,11 @@ install_pipe() {
     sudo apt update && sudo apt upgrade -y
     sudo apt install curl iptables build-essential git wget lz4 jq make gcc postgresql-client nano automake autoconf tmux htop nvme-cli libgbm1 pkg-config libssl-dev tar clang bsdmainutils ncdu unzip libleveldb-dev libclang-dev ninja-build python3-venv python3-pip -y
     curl https://sh.rustup.rs -sSf | sh -s -- -y
-    source $HOME/.cargo/env
+    # Setup PATH in a separate script, not .bashrc directly
+    echo 'export PATH="$HOME/.cargo/bin:$PATH"' > "$PIPE_PATH_SCRIPT"
+    echo "🛡️ PATH setup script created at $PIPE_PATH_SCRIPT"
+    source "$PIPE_PATH_SCRIPT"
+
     rustc --version
     cargo --version
 
@@ -59,21 +64,49 @@ install_pipe() {
 }
 
 # -------------------------
+# Function: Set Pipe CLI PATH manually
+# -------------------------
+set_pipe_path() {
+    if [ -f "$PIPE_PATH_SCRIPT" ]; then
+        source "$PIPE_PATH_SCRIPT"
+        echo "✅ Pipe CLI PATH activated for current session."
+    else
+        echo "⚠️ PATH setup script not found, creating now..."
+        echo 'export PATH="$HOME/.cargo/bin:$PATH"' > "$PIPE_PATH_SCRIPT"
+        source "$PIPE_PATH_SCRIPT"
+        echo "✅ Created and activated PATH for current session."
+    fi
+    read -p "Press Enter to continue..."
+}
+
+# -------------------------
 # Function: Create new user & set password
 # -------------------------
 create_user() {
+    if ! command -v pipe &> /dev/null; then
+        echo "❗ 'pipe' CLI not found! Please activate PATH via option 14."
+        read -p "Press Enter to continue..."
+        return
+    fi
     read -p "🆕 Enter new PIPE username: " username
     pipe new-user "$username"
     echo "🔒 Set your password:"
     pipe set-password
     echo "📝 Editing config file..."
     nano "$CONFIG_FILE"
+    echo "✅ User created, now displaying credentials..."
+    view_credentials
 }
 
 # -------------------------
 # Function: Apply referral code & generate
 # -------------------------
 apply_referral() {
+    if ! command -v pipe &> /dev/null; then
+        echo "❗ 'pipe' CLI not found! Please activate PATH via option 14."
+        read -p "Press Enter to continue..."
+        return
+    fi
     read -p "🎁 Enter referral code to apply: " code
     pipe referral apply "$code"
     pipe referral generate
@@ -85,48 +118,94 @@ apply_referral() {
 # Function: Swap SOL → PIPE
 # -------------------------
 swap_tokens() {
+    if ! command -v pipe &> /dev/null; then
+        echo "❗ 'pipe' CLI not found! Please activate PATH via option 14."
+        read -p "Press Enter to continue..."
+        return
+    fi
     echo "🔄 Swapping 2 SOL for PIPE token..."
     pipe swap-sol-for-pipe 2
     read -p "Press Enter to continue..."
 }
 
 # -------------------------
-# Function: Download from Google Drive & Upload to PIPE
+# Function: Download & Upload multiple Google Drive files
 # -------------------------
-upload_gdrive_file() {
-    echo "📤 Google Drive File Download & Upload to PIPE"
-    setup_venv
+upload_multiple_gdrive_files() {
+    if ! command -v gdown &> /dev/null; then
+        setup_venv
+    fi
     source "$VENV_DIR/bin/activate"
-
-    read -p "🔗 Enter Google Drive file link: " gdrive_link
-    read -p "✏️ Enter desired filename (with extension): " new_name
 
     USER_HOME=$(eval echo ~$USER)
     DOWNLOAD_DIR="$USER_HOME/pipe_downloads"
     mkdir -p "$DOWNLOAD_DIR"
 
-    echo "⚙️ Downloading file from Google Drive..."
-    gdown --fuzzy "$gdrive_link" -O "$DOWNLOAD_DIR/$new_name"
+    declare -a links
+    declare -a names
 
-    FILE_PATH="$DOWNLOAD_DIR/$new_name"
+    echo "🔢 Enter up to 5 Google Drive file links. Press Enter to skip remaining."
 
-    if [ ! -f "$FILE_PATH" ]; then
-        echo "❌ Download failed!"
+    for i in {1..5}; do
+        read -p "🔗 Link #$i: " link
+        if [ -z "$link" ]; then
+            break
+        fi
+        links+=("$link")
+        read -p "✏️ Desired filename for Link #$i (with extension): " fname
+        names+=("$fname")
+    done
+
+    if [ ${#links[@]} -eq 0 ]; then
+        echo "❌ No links provided, returning to menu."
         deactivate
         read -p "Press Enter to continue..."
         return
     fi
 
-    FILE_SIZE=$(du -h "$FILE_PATH" | cut -f1)
-    echo "✅ Downloaded $new_name ($FILE_SIZE)"
-    
-    echo "📤 Uploading to PIPE..."
-    pipe upload-file "$FILE_PATH" "$new_name"
-    echo "🔗 Generating public link..."
-    pipe create-public-link "$new_name"
+    if ! command -v pipe &> /dev/null; then
+        echo "❗ 'pipe' CLI not found! Please activate PATH via option 14."
+        deactivate
+        read -p "Press Enter to continue..."
+        return
+    fi
+
+    for idx in "${!links[@]}"; do
+        echo "⚙️ Downloading file #$((idx+1)) from Google Drive..."
+        gdown --fuzzy "${links[$idx]}" -O "$DOWNLOAD_DIR/${names[$idx]}"
+        FILE_PATH="$DOWNLOAD_DIR/${names[$idx]}"
+
+        if [ ! -f "$FILE_PATH" ]; then
+            echo "❌ Download failed for ${names[$idx]}"
+            continue
+        fi
+
+        FILE_SIZE=$(du -h "$FILE_PATH" | cut -f1)
+        echo "✅ Downloaded ${names[$idx]} ($FILE_SIZE)"
+
+        echo "📤 Uploading ${names[$idx]} to PIPE..."
+        pipe upload-file "$FILE_PATH" "${names[$idx]}"
+        echo "🔗 Generating public link for ${names[$idx]}..."
+        pipe create-public-link "${names[$idx]}"
+        echo "---------------------------------------"
+    done
 
     deactivate
-    echo "✅ Done!"
+    echo "✅ All provided files processed."
+    read -p "Press Enter to continue..."
+}
+
+# -------------------------
+# Function: Generate public link for a file
+# -------------------------
+generate_public_link() {
+    if ! command -v pipe &> /dev/null; then
+        echo "❗ 'pipe' CLI not found! Please activate PATH via option 14."
+        read -p "Press Enter to continue..."
+        return
+    fi
+    read -p "Enter filename to generate link: " fname
+    pipe create-public-link "$fname"
     read -p "Press Enter to continue..."
 }
 
@@ -134,8 +213,13 @@ upload_gdrive_file() {
 # Function: List uploaded files
 # -------------------------
 list_files() {
-    echo "📂 Uploaded files:"
-    pipe list-files
+    if ! command -v pipe &> /dev/null; then
+        echo "❗ 'pipe' CLI not found! Please activate PATH via option 14."
+        read -p "Press Enter to continue..."
+        return
+    fi
+    echo "📂 Uploaded files (pipe list-uploads):"
+    pipe list-uploads
     read -p "Press Enter to continue..."
 }
 
@@ -143,6 +227,11 @@ list_files() {
 # Function: Delete file
 # -------------------------
 delete_file() {
+    if ! command -v pipe &> /dev/null; then
+        echo "❗ 'pipe' CLI not found! Please activate PATH via option 14."
+        read -p "Press Enter to continue..."
+        return
+    fi
     read -p "❌ Enter filename to delete: " fname
     pipe delete-file "$fname"
     read -p "Press Enter to continue..."
@@ -152,6 +241,11 @@ delete_file() {
 # Function: Show referral info
 # -------------------------
 referral_info() {
+    if ! command -v pipe &> /dev/null; then
+        echo "❗ 'pipe' CLI not found! Please activate PATH via option 14."
+        read -p "Press Enter to continue..."
+        return
+    fi
     echo "📋 Referral information:"
     pipe referral show
     read -p "Press Enter to continue..."
@@ -210,25 +304,27 @@ while true; do
     echo -e "\e[1;36m 2. 🆕  Create new user and set password\e[0m"
     echo -e "\e[1;35m 3. 🎁  Apply referral code and generate\e[0m"
     echo -e "\e[1;32m 4. 🔄  Swap 2 SOL for PIPE token\e[0m"
-    echo -e "\e[1;36m 5. 📤  Download Google Drive file & Upload to PIPE\e[0m"
-    echo -e "\e[1;35m 6. 🔗  Generate public link for file\e[0m"
-    echo -e "\e[1;33m 7. 📂  List uploaded files\e[0m"
+    echo -e "\e[1;35m 5. 📤  Download & Upload multiple Google Drive files\e[0m"
+    echo -e "\e[1;36m 6. 🔗  Generate public link for file\e[0m"
+    echo -e "\e[1;33m 7. 📂  List uploaded files (pipe list-uploads)\e[0m"
     echo -e "\e[1;31m 8. ❌  Delete a file\e[0m"
     echo -e "\e[1;36m 9. 📋  Show referral information\e[0m"
     echo -e "\e[1;34m10. 🔄  Reload config file\e[0m"
     echo -e "\e[1;33m11. 📝  View config file\e[0m"
     echo -e "\e[1;32m12. 🚪  Exit script\e[0m"
     echo -e "\e[1;36m13. 🧾  View PIPE credentials\e[0m"
+    echo -e "\e[1;36m14. 🛡️  Set PATH for pipe CLI\e[0m"
+    echo -e "\e[1;31m15. 🚪  Exit script\e[0m"
     echo -e "\e[1;34m===============================================\e[0m"
 
-    read -p "👉 Choose an option [1-13]: " opt
+    read -p "👉 Choose an option [1-15]: " opt
     case $opt in
         1) install_pipe ;;
         2) create_user ;;
         3) apply_referral ;;
         4) swap_tokens ;;
-        5) upload_gdrive_file ;;
-        6) echo "Enter filename to generate link:"; read fname; pipe create-public-link "$fname"; read -p "Press Enter to continue...";;
+        5) upload_multiple_gdrive_files ;;
+        6) generate_public_link ;;
         7) list_files ;;
         8) delete_file ;;
         9) referral_info ;;
@@ -236,6 +332,8 @@ while true; do
         11) view_config ;;
         12) echo "🚪 Exiting... Bye!"; exit 0 ;;
         13) view_credentials ;;
-        *) echo -e "\e[1;31m❌ Invalid option! Please enter 1-13.\e[0m"; read -p "Press Enter to continue..." ;;
+        14) set_pipe_path ;;
+        15) echo "🚪 Exiting... Bye!"; exit 0 ;;
+        *) echo -e "\e[1;31m❌ Invalid option! Please enter 1-15.\e[0m"; read -p "Press Enter to continue..." ;;
     esac
 done
